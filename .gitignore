@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Data (too large for git)
+ml/data/dataset/
+ml/data/processed/
+ml/data/embeddings/
+checkpoints/
+logs/
+wandb/
+*.npy
+*.parquet
+*.jpg
+*.pt
+
+# Training artifacts
+checkpoints/
+logs/
+wandb/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

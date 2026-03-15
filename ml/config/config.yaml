@@ -1,0 +1,121 @@
+project:
+  name: "hybridprop-recsys"
+  seed: 42
+  device: "auto"  # auto | cuda | cpu
+
+paths:
+  raw_data: "ml/data/dataset/yelp_dataset"
+  photos_dir: "ml/data/dataset/yelp_photos/photos"
+  photos_json: "ml/data/dataset/yelp_photos/photos.json"
+  processed: "ml/data/processed"
+  embeddings: "ml/data/embeddings"
+  checkpoints: "checkpoints"
+  logs: "logs"
+
+
+data:
+  min_reviews: 5
+  min_photos: 1
+  max_reviews_per_business: 30
+  min_user_interactions: 3
+  positive_threshold: 4.0        # stars >= 4 → positive
+  restaurant_categories:
+    - "Restaurants"
+    - "Food"
+    - "Bars"
+    - "Cafes"
+    - "Bakeries"
+    - "Coffee & Tea"
+    - "Breweries"
+    - "Ice Cream & Frozen Yogurt"
+  val_ratio: 0.1
+  test_ratio: 0.1
+
+embeddings:
+  clip:
+    model_name: "openai/clip-vit-base-patch32"
+    dim: 512
+    batch_size: 64
+    image_size: 224
+    photo_weights:
+      food: 1.5
+      inside: 1.0
+      outside: 0.8
+      drink: 1.2
+      menu: 0.3
+  text:
+    model_name: "sentence-transformers/all-MiniLM-L6-v2"
+    dim: 384
+    batch_size: 128
+    max_seq_length: 512
+  tabular:
+    input_dim: 96
+    hidden_dim: 64
+    output_dim: 64
+
+model:
+  restaurant_tower:
+    input_dim: 960
+    hidden_dims: [512, 256]
+    output_dim: 256
+    dropout: 0.2
+    activation: "gelu"
+    batch_norm: true
+  user_tower:
+    output_dim: 256
+    attention_heads: 4
+    max_history: 50
+    dropout: 0.1
+  loss:
+    type: "bpr"
+    infonce_temperature: 0.07
+    num_negatives: 10
+    hard_negative_ratio: 0.3
+
+training:
+  epochs: 50
+  batch_size: 256
+  learning_rate: 1.0e-3
+  weight_decay: 0.01
+  optimizer: "adamw"
+  scheduler:
+    type: "cosine_warmup"
+    warmup_ratio: 0.05
+    eta_min: 1.0e-6
+  gradient_clip: 1.0
+  mixed_precision: true
+  early_stopping:
+    patience: 7
+    min_delta: 0.001
+    metric: "ndcg@10"
+  checkpoint:
+    save_every: 1
+    keep_top_k: 3
+
+evaluation:
+  ks: [5, 10, 20]
+  metrics: ["hit_rate", "ndcg", "mrr"]
+  num_eval_users: 5000
+
+qdrant:
+  host: "localhost"
+  port: 6333
+  collection_name: "restaurants"
+  vector_dim: 256
+  distance: "Cosine"
+  batch_size: 500
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  default_top_k: 20
+  soft_filter:
+    default_softness: 0.15
+    min_strict_ratio: 0.6
+    filter_bonus: 0.1
+
+logging:
+  backend: "wandb"
+  wandb_project: "hybridprop-recsys"
+  log_every_n_steps: 50
+  log_recommendations_every: 5
