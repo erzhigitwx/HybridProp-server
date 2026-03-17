@@ -8,8 +8,6 @@ venv/
 # Data (too large for git)
 ml/data/dataset/
 ml/data/processed/
-ml/data/embeddings/
-checkpoints/
 logs/
 wandb/
 *.npy
