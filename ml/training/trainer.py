@@ -13,7 +13,6 @@ from ml.config import Config
 from ml.models.two_tower import TwoTowerModel
 from ml.training.callbacks import EarlyStopping, build_scheduler
 from ml.training.checkpoint import CheckpointManager
-from ml.evaluation.evaluator import Evaluator
 from ml.utils.logging import MetricLogger
 
 logger = logging.getLogger(__name__)
@@ -61,7 +60,6 @@ class Trainer:
         model: TwoTowerModel,
         train_loader: DataLoader,
         val_loader: Optional[DataLoader],
-        evaluator: Optional[Evaluator],
         device: torch.device,
     ):
         self.cfg = cfg
@@ -69,7 +67,6 @@ class Trainer:
         self.device = device
         self.train_loader = train_loader
         self.val_loader = val_loader
-        self.evaluator = evaluator
 
         self.optimizer = self._build_optimizer()
 
