@@ -120,3 +120,8 @@ logging:
   wandb_project: "hybridprop-recsys"
   log_every_n_steps: 50
   log_recommendations_every: 5
+
+services:
+  - type: web
+    buildCommand: "pip install -r requirements.txt && python ml/embeddings/aggregator.py"
+    startCommand: "uvicorn api.main:app --host 0.0.0.0 --port $PORT"
