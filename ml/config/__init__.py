@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 
 import yaml
 
+
 @dataclass
 class PathsConfig:
     raw_data: str = "data/yelp_dataset"
@@ -145,6 +146,7 @@ class QdrantConfig:
     vector_dim: int = 256
     distance: str = "Cosine"
     batch_size: int = 500
+    api_key: Optional[str] = None
 
 
 @dataclass

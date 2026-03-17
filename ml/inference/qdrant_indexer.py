@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from typing import Dict, List, Optional
+
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -18,9 +19,17 @@ class QdrantIndexer:
 
     def _connect(self):
         from qdrant_client import QdrantClient
-        from qdrant_client.models import Distance, VectorParams
+        from qdrant_client.models import Distance
 
-        self.client = QdrantClient(host=self.cfg.host, port=self.cfg.port)
+        api_key = self.cfg.api_key
+        use_https = api_key is not None
+
+        self.client = QdrantClient(
+            host=self.cfg.host,
+            port=self.cfg.port,
+            api_key=api_key,
+            https=use_https,
+        )
 
         dist_map = {
             "Cosine": Distance.COSINE,
@@ -28,7 +37,7 @@ class QdrantIndexer:
             "Dot": Distance.DOT,
         }
         self.distance = dist_map.get(self.cfg.distance, Distance.COSINE)
-        logger.info("Connected to Qdrant at %s:%d", self.cfg.host, self.cfg.port)
+        logger.info("Connected to Qdrant at %s:%d (https=%s)", self.cfg.host, self.cfg.port, use_https)
 
     def create_collection(self, recreate: bool = True):
         from qdrant_client.models import VectorParams

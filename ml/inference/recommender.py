@@ -30,8 +30,8 @@ class Recommender:
 
     def load(self):
         self._load_model()
-        self._connect_qdrant()
         self._load_item_data()
+        self._connect_qdrant()
         logger.info("Recommender ready: %d restaurants indexed", len(self._business_ids))
 
     def _load_model(self):
@@ -53,15 +53,52 @@ class Recommender:
 
     def _connect_qdrant(self):
         from qdrant_client import QdrantClient
+        from qdrant_client.models import VectorParams, Distance, PointStruct
+        import pandas as pd
+        from pathlib import Path
 
-        self._qdrant_client = QdrantClient(
-            host=self.cfg.qdrant.host,
-            port=self.cfg.qdrant.port,
+        logger.info("Initializing embedded Qdrant (in-memory)...")
+        self._qdrant_client = QdrantClient(":memory:")
+
+        collection = self.cfg.qdrant.collection_name
+        self._qdrant_client.create_collection(
+            collection_name=collection,
+            vectors_config=VectorParams(
+                size=self.cfg.qdrant.vector_dim,
+                distance=Distance.COSINE,
+            ),
         )
+
+        processed = Path(self.cfg.paths.processed)
+        biz_lookup = {}
+        if (processed / "businesses.parquet").exists():
+            businesses = pd.read_parquet(processed / "businesses.parquet")
+            biz_lookup = businesses.set_index("business_id").to_dict("index")
+
+        points = []
+        for idx, (biz_id, emb) in enumerate(zip(self._business_ids, self._item_embeddings)):
+            meta = biz_lookup.get(biz_id, {})
+            payload = {
+                "business_id": biz_id,
+                "name": meta.get("name", ""),
+                "city": meta.get("city", ""),
+                "state": meta.get("state", ""),
+                "stars": float(meta.get("stars", 0)),
+                "review_count": int(meta.get("review_count", 0)),
+                "price_range": int(meta.get("price_range", 0)) if pd.notna(meta.get("price_range")) else 0,
+                "categories": meta.get("categories", ""),
+                "latitude": float(meta.get("latitude", 0)),
+                "longitude": float(meta.get("longitude", 0)),
+            }
+            points.append(PointStruct(id=idx, vector=emb.tolist(), payload=payload))
+
+        self._qdrant_client.upsert(collection_name=collection, points=points)
+        logger.info("Embedded Qdrant loaded: %d points", len(points))
+
         self._soft_filter = SoftFilterEngine(
             cfg=self.cfg.api.soft_filter,
             qdrant_client=self._qdrant_client,
-            collection_name=self.cfg.qdrant.collection_name,
+            collection_name=collection,
         )
 
     def _load_item_data(self):

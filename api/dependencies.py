@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from typing import Dict, List, Optional, Tuple
+
 from ml.config import Config, load_config
 from ml.inference.recommender import Recommender
 
@@ -13,13 +14,31 @@ class AppState:
     def __init__(self):
         self.config: Optional[Config] = None
         self.recommender: Optional[Recommender] = None
+        self.mongo_db = None
         self.user_sessions: Dict[str, List[Tuple[str, float]]] = defaultdict(list)
 
     def initialize(self, config_path: str = "ml/config/config.yaml"):
         self.config = load_config(config_path)
         self.recommender = Recommender(self.config)
         self.recommender.load()
+        self._connect_mongo()
         logger.info("AppState initialized")
+
+    def _connect_mongo(self):
+        import os
+        uri = os.environ.get("MONGODB_URI")
+        if uri:
+            try:
+                from pymongo import MongoClient
+                client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+                client.admin.command("ping")
+                self.mongo_db = client["hybridprop"]
+                logger.info("MongoDB connected")
+            except Exception as e:
+                logger.warning("MongoDB connection failed: %s (restaurant detail page will be unavailable)", e)
+                self.mongo_db = None
+        else:
+            logger.info("MONGODB_URI not set, restaurant detail will use parquet fallback")
 
     def get_user_history(self, user_id: str) -> List[Tuple[str, float]]:
         return self.user_sessions.get(user_id, [])

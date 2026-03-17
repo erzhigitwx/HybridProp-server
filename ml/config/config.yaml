@@ -98,12 +98,13 @@ evaluation:
   num_eval_users: 5000
 
 qdrant:
-  host: "localhost"
+  host: "4b98d07d-9270-48f9-9f8d-bdd13a39737a.eu-west-2-0.aws.cloud.qdrant.io"
   port: 6333
   collection_name: "restaurants"
   vector_dim: 256
   distance: "Cosine"
   batch_size: 500
+  api_key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.oL-tzNSsrTLuud_V6r_yV32dks2KLm5p2MhzCBAOq2E"
 
 api:
   host: "0.0.0.0"

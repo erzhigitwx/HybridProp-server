@@ -4,13 +4,15 @@ import logging
 import os
 import time
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+
 from api.dependencies import app_state
 from api.routers.recommend import router as recommend_router
 from api.routers.feedback import router as feedback_router
-from api.routers.restaurant import router as restaurant_router
+from api.routers.restaurant_mongo import router as restaurant_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -19,15 +21,22 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+# ── Lifespan (startup / shutdown) ───────────────────────────
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # startup
     config_path = os.environ.get("HYBRIDPROP_CONFIG", "ml/config/config.yaml")
     logger.info("Initializing app with config: %s", config_path)
     app_state.initialize(config_path)
     logger.info("App ready!")
     yield
+    # shutdown
     logger.info("Shutting down")
 
+
+# ── App ─────────────────────────────────────────────────────
 
 app = FastAPI(
     title="HybridProp RecSys",
@@ -40,13 +49,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # tighten in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ── Request timing middleware ───────────────────────────────
 
 @app.middleware("http")
 async def add_timing_header(request: Request, call_next):
@@ -56,9 +69,15 @@ async def add_timing_header(request: Request, call_next):
     response.headers["X-Process-Time"] = f"{elapsed:.4f}"
     return response
 
+
+# ── Routers ─────────────────────────────────────────────────
+
 app.include_router(recommend_router)
 app.include_router(feedback_router)
 app.include_router(restaurant_router)
+
+
+# ── Health check ────────────────────────────────────────────
 
 @app.get("/health", tags=["system"])
 async def health():
