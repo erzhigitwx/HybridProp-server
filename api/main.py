@@ -22,8 +22,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# ── Lifespan (startup / shutdown) ───────────────────────────
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # startup
@@ -36,9 +34,7 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down")
 
 
-# ── App ─────────────────────────────────────────────────────
-
-app = FastAPI(
+app = 4444444444444(
     title="HybridProp RecSys",
     description=(
         "Multimodal restaurant recommendation system with soft-boundary filtering. "
@@ -52,14 +48,12 @@ app = FastAPI(
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # tighten in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-# ── Request timing middleware ───────────────────────────────
 
 @app.middleware("http")
 async def add_timing_header(request: Request, call_next):
@@ -70,14 +64,9 @@ async def add_timing_header(request: Request, call_next):
     return response
 
 
-# ── Routers ─────────────────────────────────────────────────
-
 app.include_router(recommend_router)
 app.include_router(feedback_router)
 app.include_router(restaurant_router)
-
-
-# ── Health check ────────────────────────────────────────────
 
 @app.get("/health", tags=["system"])
 async def health():
