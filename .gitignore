@@ -12,7 +12,6 @@ logs/
 wandb/
 *.parquet
 *.jpg
-*.pt
 
 # Training artifacts
 logs/
