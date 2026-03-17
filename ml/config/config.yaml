@@ -123,4 +123,5 @@ logging:
 
 services:
   - type: web
-    buildCommand: "pip install -r requirements.txt && python ml/embeddings/aggregator.py"
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn api.main:app --host 0.0.0.0 --port $PORT"
