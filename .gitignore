@@ -15,7 +15,6 @@ wandb/
 *.pt
 
 # Training artifacts
-checkpoints/
 logs/
 wandb/
 
