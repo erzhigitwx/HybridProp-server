@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down")
 
 
-app = 4444444444444(
+app = FastAPI(
     title="HybridProp RecSys",
     description=(
         "Multimodal restaurant recommendation system with soft-boundary filtering. "
