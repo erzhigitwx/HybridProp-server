@@ -6,11 +6,8 @@ __pycache__/
 venv/
 
 # Data (too large for git)
-ml/data/dataset/
-ml/data/processed/
 logs/
 wandb/
-*.parquet
 *.jpg
 
 # Training artifacts
